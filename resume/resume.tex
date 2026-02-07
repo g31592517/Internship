@@ -1,0 +1,211 @@
+%-------------------------
+% Resume in Latex
+% Author : Wesley Barasa
+% Based off of: https://github.com/sb2nov/resume
+% License : MIT
+%-------------------------
+
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\input{glyphtounicode}
+
+
+%----------FONT OPTIONS----------
+% sans-serif
+% \usepackage[sfdefault]{FiraSans}
+% \usepackage[sfdefault]{roboto}
+% \usepackage[sfdefault]{noto-sans}
+% \usepackage[default]{sourcesanspro}
+
+% serif
+% \usepackage{CormorantGaramond}
+% \usepackage{charter}
+
+
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footer fields
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+% Ensure that generate pdf is machine readable/ATS parsable
+\pdfgentounicode=1
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+%-------------------------------------------
+%%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{document}
+
+%----------HEADING----------
+% \begin{tabular*}{\textwidth}{l@{\extracolsep{\fill}}r}
+%   \textbf{\href{http://sourabhbajaj.com/}{\Large Sourabh Bajaj}} & Email : sourabh@sourabhbajaj.com\\
+%   \href{http://sourabhbajaj.com/}{http://www.sourabhbajaj.com} & Mobile : +1-123-456-7890 \\
+% \end{tabular*}
+
+\begin{center}
+    \textbf{\Huge \scshape Wesley Barasa} \\ \vspace{1pt}
+    \small +254 740 728 834 $|$ \href{mailto:wesleyjuma01@gmail.com}{\underline{wesleyjuma01@gmail.com}} $|$ 
+    \href{https://github.com/Weejay13}{\underline{github.com/Weejay13}} \\ \vspace{5pt}
+    \textbf{\small Seeking Software Engineering Internship (Available Immediately)}
+\end{center}
+
+
+%-----------EDUCATION-----------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Kisii University}{Kisii, Kenya}
+      {Bachelor of Science in Software Engineering}{Current Student}
+      \resumeItemListStart
+        \resumeItem{\textbf{Relevant Coursework}: Data Structures \& Algorithms, Database Systems, Web Development, Mobile Application Development, Operating Systems, Software Testing \& Quality Assurance.}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+
+
+%-----------EXPERIENCE-----------
+\section{Experience}
+  \resumeSubHeadingListStart
+    % Example Experience Entry
+    % \resumeSubheading
+    %   {Software Engineer Intern}{Nairobi, Kenya}
+    %   {Tech Company Name}{May 202x -- August 202x}
+    %   \resumeItemListStart
+    %     \resumeItem{Developed and maintained web applications using Python and Django.}
+    %     \resumeItem{Collaborated with cross-functional teams to define, design, and ship new features.}
+    %   \resumeItemListEnd
+
+    \resumeSubheading
+      {Software Developer}{Remote / Freelance}
+      {Self-Employed}{Jan 2023 -- Present}
+      \resumeItemListStart
+        \resumeItem{Designed and developed full-stack web applications for various clients.}
+        \resumeItem{Implemented responsive designs and ensured cross-browser compatibility.}
+      \resumeItemListEnd
+
+  \resumeSubHeadingListEnd
+
+
+%-----------PROJECTS-----------
+\section{Projects}
+  \resumeSubHeadingListStart
+    \resumeProjectHeading
+      {\textbf{Kaifway.com} $|$ \emph{React, TypeScript, Python, PostgreSQL}}{Live}
+      \resumeItemListStart
+        \resumeItem{Developed a comprehensive web platform accessible at \href{https://kaifway.com}{\underline{kaifway.com}}.}
+        \resumeItem{Implemented user authentication, database management, and dynamic content rendering.}
+        \resumeItem{Optimized site performance and SEO rankings for better visibility.}
+      \resumeItemListEnd
+    \resumeProjectHeading
+      {\textbf{Ineat.co.ke} $|$ \emph{React Native, Full Stack Development}}{Live}
+      \resumeItemListStart
+        \resumeItem{Created a specialized web/mobile application serving users at \href{https://ineat.co.ke}{\underline{ineat.co.ke}}.}
+        \resumeItem{Designed intuitive user interfaces and seamless navigation flows.}
+        \resumeItem{Integrated payment gateways and order processing systems.}
+      \resumeItemListEnd
+    \resumeProjectHeading
+      {\textbf{Auto Trade Nation} $|$ \emph{React, Vercel, Web Development}}{Live}
+      \resumeItemListStart
+        \resumeItem{Developed an automotive marketplace accessible at \href{https://auto-trade-nation.vercel.app}{\underline{auto-trade-nation.vercel.app}}.}
+        \resumeItem{Implemented vehicle listing comparison, ride booking, and service scheduling features.}
+        \resumeItem{Integrated parts shopping and user profile management systems.}
+      \resumeItemListEnd
+    \resumeProjectHeading
+      {\textbf{Topada Market} $|$ \emph{React, Vercel, Web Development}}{Live}
+      \resumeItemListStart
+        \resumeItem{Developed a digital ecosystem for a diversified African conglomerate accessible at \href{https://todapa-market.vercel.app/}{\underline{todapa-market.vercel.app}}.}
+        \resumeItem{Implemented modern corporate branding, contact integration, and accessible UI/UX.}
+        \resumeItem{Optimized platform for scalability and engagement across multiple business sectors.}
+      \resumeItemListEnd
+    \resumeProjectHeading
+      {\textbf{Internship Scraper} $|$ \emph{Python, Pandas, BeautifulSoup}}{Feb 2026}
+      \resumeItemListStart
+        \resumeItem{Built an automated tool to scrape job listings from myjobmag, careerjet, and corporate sites.}
+        \resumeItem{Implemented targeted search for 100+ NGOs and Big Tech companies.}
+        \resumeItem{Automated data collection pipelines using Linux Cron jobs.}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+
+
+%-----------TECHNICAL SKILLS-----------
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+     \textbf{Languages}{: Python, TypeScript, JavaScript, SQL (PostgreSQL), HTML/CSS} \\
+     \textbf{Frameworks}{: React, React Native, Node.js} \\
+     \textbf{Developer Tools}{: Git, Docker, VS Code, Linux/Bash} \\
+     \textbf{Libraries}{: Pandas, NumPy, BeautifulSoup, Requests}
+    }}
+ \end{itemize}
+
+
+%-------------------------------------------
+\end{document}
