@@ -1,18 +1,48 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "Run Scraper",
-            "type": "shell",
-            "command": "/home/wesley/wesley/bin/python",
-            "args": [
-                "src/main.py"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": []
-        }
-    ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Scraper",
+			"type": "shell",
+			"command": "/home/wesley/wesley/bin/python",
+			"args": [
+				"src/main.py"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Auto-Applier",
+			"type": "shell",
+			"command": "/home/wesley/wesley/bin/python",
+			"args": [
+				"src/apply_to_roles.py"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Install Dependencies",
+			"type": "shell",
+			"command": "/home/wesley/wesley/bin/python",
+			"args": [
+				"install",
+				"-r",
+				"requirements.txt"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Run Auto-Applier",
+			"type": "shell",
+			"command": "/home/wesley/wesley/bin/python",
+			"args": [
+				"src/apply_to_roles.py"
+			],
+			"group": "build"
+		}
+	]
 }

@@ -151,3 +151,12 @@ cython_debug/
 # PyCharm
 .idea/
 output/
+
+# Sensitive Data
+config.py
+.env
+output/
+resume/
+*.pdf
+applied_jobs.txt
+

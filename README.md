@@ -50,3 +50,13 @@ The scraper operates in three phases:
 The project is configured to run automatically every 30 minutes via checking `cron`.
 - Logs are located in `scraper.log`
 - Outputs are saved to `output/` with timestamps.
+
+## Configuration
+1. Copy the sample config file:
+    ```bash
+    cp src/config.sample.py src/config.py
+    ```
+2. Edit `src/config.py` with your personal details (Name, Email, Phone, Resume Path) and Google App Password.
+
+## Important
+Do not commit `src/config.py` or `output/` files to the repository. They are ignored by default.

@@ -11,6 +11,17 @@ import re
 import os
 import urllib3
 
+# Import configuration
+try:
+    from src.config import IT_QUERIES, IT_TARGETED_COMPANIES, ADMIN_QUERIES, ADMIN_TARGETED_COMPANIES
+except ImportError:
+    print("Error: src/config.py not found using 'src.config'. Trying local import...")
+    try: 
+        from config import IT_QUERIES, IT_TARGETED_COMPANIES, ADMIN_QUERIES, ADMIN_TARGETED_COMPANIES
+    except ImportError:
+        print("CRITICAL ERROR: config.py not found. create one from src/config.sample.py")
+        exit(1)
+
 # Suppress SSL warnings for KCB/others
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -24,92 +35,19 @@ class JobScraper:
         ]
         
         # TRACK 1: IT & CS Config
-        self.it_queries = [
-            "Information Technology Internship",
-            "Computer Science Internship",
-            "Software Engineering Internship",
-        ]
+        self.it_queries = IT_QUERIES
         
         self.it_direct_scrapers = [
             MicrosoftScraper(),
             KCBScraper(),
         ]
 
-        self.it_targeted_companies = [
-            "Safaricom", "Google", "Equity Bank", "Absa Bank", 
-            "Co-operative Bank", "NCBA", "Stanbic", "I&M Bank", 
-            "Oracle", "IBM", "Cisco", "Andela", "Visa",
-            "Cellulant", "Interswitch", "DPO Group", "Little App",
-            "Jubilee Insurance", "Britam", "APA Insurance",
-            "ICT Authority", "Kenya Revenue Authority", "KenGen", "Kenya Power"
-        ]
+        self.it_targeted_companies = IT_TARGETED_COMPANIES
 
         # TRACK 2: Public Administration Config
-        self.admin_queries = [
-            "Public Administration Internship",
-            "Public Policy Internship",
-            "Government Internship",
-            "Policy Analyst Internship",
-            "Administrative Officer Internship",
-            "Governance Internship",
-            "Civic Engagement Internship",
-            "County Government Internship",
-            "Parliamentary Internship",
-            "Program Assistant Internship",
-            "Project Management Internship",
-            "Monitoring and Evaluation Internship",
-            "Social Work Internship",
-            "Political Science Internship",
-            "International Relations Internship",
-            "Non-Governmental Organization Internship",
-            "Humanitarian Internship"
-        ]
+        self.admin_queries = ADMIN_QUERIES
         
-        self.admin_targeted_companies = [
-            # UN & Multilaterals
-            "United Nations", "UNEP", "UNDP", "UNICEF", "UNHCR", "WFP", "WHO", "FAO", 
-            "UN Women", "IOM", "World Bank", "IMF",
-            
-            # Major International NGOs
-            "World Vision", "Save the Children", "Oxfam", "Care International", 
-            "Plan International", "International Rescue Committee", "Catholic Relief Services", 
-            "Mercy Corps", "ActionAid", "Goal Kenya", "Concern Worldwide", 
-            "Danish Refugee Council", "Norwegian Refugee Council", "Doctors Without Borders", 
-            "Fred Hollows Foundation", "FHI 360", "PATH", "TechnoServe", "RTI International", 
-            "Pact", "Palladium", "Chemonics", "Compassion International", "ChildFund", 
-            "SOS Children's Villages", "Habitat for Humanity", "Heifer International", 
-            "SNV Netherlands", "VSO", "Lutheran World Federation", "Islamic Relief", "ADRA", 
-            "Johanniter International", "Welthungerhilfe", "Trocaire", "Christian Aid", 
-            "Tearfund", "War Child", "Search for Common Ground", "Saferworld", "Interpeace",
-            "Finn Church Aid", "Hand in Hand Eastern Africa", "Self Help Africa", "Solidaridad",
-            "Action Against Hunger", "Hivos", "Sightsavers", "Light for the World", "CBM",
-            "HelpAge International", "ForumCiv", "Vi Agroforestry", "WeWorld", "Avsi Foundation",
-
-            # Health, Research & Foundations
-            "Amref Health Africa", "Living Goods", "Marie Stopes", "LVCT Health", 
-            "Elizabeth Glaser Pediatric AIDS Foundation", "APHRC", "ILRI", "ICRAF", "URC",
-            "Jacaranda Health", "Evidence Action", "GiveDirectly", "IDinsight", "Busara Center",
-            "Innovations for Poverty Action", "Aga Khan Foundation", "M-PESA Foundation",
-            "Mastercard Foundation", "Rockefeller Foundation", "Ford Foundation",
-
-            # Rights, Governance & Civil Society
-            "Amnesty International", "Human Rights Watch", "Transparency International", 
-            "Kenya Human Rights Commission", "International Justice Mission", "Haki Africa",
-            "Act Change Transform", "Uraia Trust", "Inuka Kenya", "Twaweza",
-
-            # Conservation
-            "WWF Kenya", "African Wildlife Foundation", "The Nature Conservancy", 
-            "Green Belt Movement", "BirdLife International", "Rainforest Alliance",
-
-            # Local/Regional & Social Enterprises
-            "Kenya Red Cross", "Shining Hope for Communities", "Carolina for Kibera", 
-            "ZanaAfrica", "Dignitas", "One Acre Fund", "Farm Africa", "Sanergy", "RefuSHE", 
-            "HIAS", "Xavier Project", "Windle International",
-
-            # Government Commissions (Administrative)
-            "IEBC", "Ethics and Anti-Corruption Commission", "Public Service Commission", 
-            "National Environment Management Authority", "Kenya National Commission on Human Rights"
-        ]
+        self.admin_targeted_companies = ADMIN_TARGETED_COMPANIES
 
     def run(self):
         print(f"Starting comprehensive job scraper...")
@@ -185,24 +123,6 @@ class JobScraper:
         os.makedirs('output', exist_ok=True)
         
         filename = f"output/{filename_prefix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        df.to_csv(filename, index=False)
-        print(f"Results saved to {filename}")
-
-if __name__ == "__main__":
-    scraper = JobScraper()
-    scraper.run()
-
-    def save_results(self):
-        if not self.all_jobs:
-            print("No jobs found to save.")
-            return
-
-        df = pd.DataFrame(self.all_jobs)
-        
-        # Ensure output directory exists
-        os.makedirs('output', exist_ok=True)
-        
-        filename = f"output/internships_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         df.to_csv(filename, index=False)
         print(f"Results saved to {filename}")
 
