@@ -51,6 +51,12 @@ def is_job_applied(job_link):
         applied = set(line.strip() for line in f if line.strip())
     return job_link in applied
 
+# Paths to supporting documents to always include with every application
+SUPPORTING_DOCS = [
+    os.path.abspath("INTERNSHIPS/Attachment Letter from school.pdf"),
+    os.path.abspath("INTERNSHIPS/Insurance cover.pdf"),
+]
+
 def send_email_automatically(sender_email, sender_password, recipient_email, subject, body, attachment_path):
     try:
         msg = MIMEMultipart()
@@ -61,11 +67,15 @@ def send_email_automatically(sender_email, sender_password, recipient_email, sub
         # Attach body
         msg.attach(MIMEText(body, 'plain'))
 
-        # Attach PDF
-        with open(attachment_path, "rb") as f:
-            part = MIMEApplication(f.read(), Name=os.path.basename(attachment_path))
-        part['Content-Disposition'] = f'attachment; filename="{os.path.basename(attachment_path)}"'
-        msg.attach(part)
+        # Collect all attachments: resume + supporting docs
+        all_attachments = [attachment_path] + [p for p in SUPPORTING_DOCS if os.path.exists(p)]
+
+        for doc_path in all_attachments:
+            with open(doc_path, "rb") as f:
+                part = MIMEApplication(f.read(), Name=os.path.basename(doc_path))
+            part['Content-Disposition'] = f'attachment; filename="{os.path.basename(doc_path)}"'
+            msg.attach(part)
+            print(f"  -> Attached: {os.path.basename(doc_path)}")
 
         # Connect to Gmail SMTP
         context = ssl.create_default_context()
@@ -73,7 +83,7 @@ def send_email_automatically(sender_email, sender_password, recipient_email, sub
             server.login(sender_email, sender_password)
             server.send_message(msg)
         
-        print(f"  -> SUCCESS: Email sent to {recipient_email} with {os.path.basename(attachment_path)}")
+        print(f"  -> SUCCESS: Email sent to {recipient_email}")
         return True
     except Exception as e:
         print(f"  -> FAILED to send email: {e}")

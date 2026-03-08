@@ -160,3 +160,9 @@ resume/
 *.pdf
 applied_jobs.txt
 
+# Resume PDFs
+*.pdf
+
+# Environment files
+.env
+.env.local
