@@ -8,7 +8,11 @@ import OpportunityModal from './components/OpportunityModal.jsx'
 import ProfileForm from './components/ProfileForm.jsx'
 import Applications from './components/Applications.jsx'
 
-const PROFILE_KEY = 'internship-finder.profile' // { id, token } — this browser's key to its profile
+// { id, token, fields } — this browser's key to its profile, plus a copy of the details so the profile can be
+// re-created if the server loses its data (Render's free plan wipes it on every restart / sleep).
+const PROFILE_KEY = 'internship-finder.profile'
+const PROFILE_FIELDS = ['full_name', 'email', 'course', 'phone', 'university', 'year_of_study', 'skills',
+  'linkedin', 'github', 'cover_letter']
 
 const readStored = () => {
   try {
@@ -18,6 +22,10 @@ const readStored = () => {
     return null
   }
 }
+const writeStored = (v) => {
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(v)) } catch { /* ignore */ }
+}
+const pickFields = (p) => Object.fromEntries(PROFILE_FIELDS.map((k) => [k, p[k] ?? '']))
 
 export default function App() {
   const [view, setView] = useState('search')
@@ -27,21 +35,37 @@ export default function App() {
   const [search, setSearch] = useState({ status: 'idle', data: null, error: '' })
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [open, setOpen] = useState(null) // { id, focusApply }
+  const [notice, setNotice] = useState('')
   const abortRef = useRef(null)
 
-  // restore the saved profile (no login in this prototype; the id is kept in this browser)
+  const onProfileSaved = useCallback((p) => {
+    const { token, ...rest } = p
+    const tok = token || readStored()?.token   // the token is only returned when the profile is created
+    if (token) setProfileToken(token)
+    if (tok) writeStored({ id: rest.id, token: tok, fields: pickFields(rest) })
+    setProfile(rest)
+  }, [])
+
+  // restore the saved profile (no accounts: this browser holds the profile's token)
   useEffect(() => {
     const saved = readStored()
     if (!saved) return
     setProfileToken(saved.token)
-    api.getProfile(saved.id).then(setProfile).catch((e) => {
-      // forget it only if the server says it doesn't exist (not when the server is asleep / unreachable)
-      if (e.status === 404) {
-        setProfileToken(null)
-        try { localStorage.removeItem(PROFILE_KEY) } catch { /* ignore */ }
+    api.getProfile(saved.id).then(onProfileSaved).catch(async (e) => {
+      // act only if the server says it doesn't exist (not when the server is asleep / unreachable)
+      if (e.status !== 404) return
+      setProfileToken(null)
+      if (saved.fields?.email) {
+        try {   // the server lost its data: re-create the profile from this browser's copy
+          onProfileSaved(await api.saveProfile(saved.fields))
+          setNotice('The server was restarted and lost its saved data, so we restored your profile from this browser. ' +
+            'Please re-upload your CV on the Profile page. Applications tracked before the restart were cleared.')
+          return
+        } catch { /* fall through */ }
       }
+      try { localStorage.removeItem(PROFILE_KEY) } catch { /* ignore */ }
     })
-  }, [])
+  }, [onProfileSaved])
 
   const loadApplications = useCallback(async (p) => {
     if (!p) return setApplications([])
@@ -58,15 +82,6 @@ export default function App() {
   useEffect(() => {
     if (profile?.course) setQuery((q) => (q.course ? q : { ...q, course: profile.course }))
   }, [profile])
-
-  const onProfileSaved = (p) => {
-    const { token, ...rest } = p
-    if (token) {   // only present when the profile was just created
-      setProfileToken(token)
-      try { localStorage.setItem(PROFILE_KEY, JSON.stringify({ id: rest.id, token })) } catch { /* ignore */ }
-    }
-    setProfile(rest)
-  }
 
   const runSearch = async (q, refresh = false) => {
     abortRef.current?.abort()
@@ -115,6 +130,12 @@ export default function App() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6">
+        {notice && (
+          <div role="status" className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <span>{notice}</span>
+            <button className="font-semibold underline" onClick={() => setNotice('')}>Dismiss</button>
+          </div>
+        )}
         {view === 'search' && (
           <>
             <section className="mb-6">

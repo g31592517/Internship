@@ -9,6 +9,7 @@ Per-site behaviour goes in SOURCE_ADAPTERS (e.g. a site whose form we learn to f
 own adapter class). We never bypass CAPTCHA/MFA/bot protection and never store third-party passwords.
 The recipient address always comes from the scraped opportunity, never from the request, so the API
 cannot be used to send mail to arbitrary people."""
+import base64
 import os
 import re
 import smtplib
@@ -17,6 +18,8 @@ from dataclasses import dataclass, field
 from email.message import EmailMessage
 from email.utils import formataddr
 from pathlib import Path
+
+import requests
 
 _EMAIL_RX = re.compile(r"^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$")
 
@@ -61,8 +64,24 @@ def smtp_settings() -> dict | None:
     }
 
 
+def brevo_settings() -> dict | None:
+    """HTTPS email API (Brevo). Use this on hosts that block SMTP ports, e.g. Render's free plan.
+    MAIL_FROM must be a sender address verified in the Brevo account."""
+    key, sender = os.environ.get("BREVO_API_KEY", "").strip(), os.environ.get("MAIL_FROM", "").strip()
+    return {"api_key": key, "sender": sender} if key and sender else None
+
+
 def dry_run() -> bool:
     return os.environ.get("APPLY_DRY_RUN", "").lower() in ("1", "true", "yes")
+
+
+def sending_mode() -> str:
+    """How 'Apply Automatically' emails leave the server: dry-run | brevo | smtp | off."""
+    if dry_run():
+        return "dry-run"
+    if brevo_settings():
+        return "brevo"
+    return "smtp" if smtp_settings() else "off"
 
 
 # ------------------------------------------------------------------ drafting
@@ -140,10 +159,10 @@ class EmailApplicationAdapter(LinkApplicationAdapter):
         )
         if not cv:
             d.note = "No CV is attached. Upload one on your profile to include it."
-        if smtp_settings() is None and not dry_run():
+        if sending_mode() == "off":
             d.can_auto_apply = False
-            d.note = ("Automatic sending isn't set up on this server (no SMTP account configured). "
-                      "You can still open your email app with this message pre-filled.")
+            d.note = ("Automatic sending isn't set up on this server. "
+                      "You can still send it from your own email app with this message pre-filled.")
         return d
 
     def submit(self, opp: dict, profile: dict, subject=None, body=None) -> None:
@@ -152,38 +171,71 @@ class EmailApplicationAdapter(LinkApplicationAdapter):
         default_subject, default_body = build_email(opp, profile)
         subject = (subject or default_subject).strip()[:200]
         body = (body or default_body).strip()
-        if dry_run():
+        mode = sending_mode()
+        if mode == "dry-run":
             return
-        cfg = smtp_settings()
-        if cfg is None:
+        if mode == "off":
             raise ApplyError("Automatic sending isn't configured on this server.")
-
-        msg = EmailMessage()
-        msg["From"] = formataddr((profile["full_name"], cfg["user"]))
-        msg["Reply-To"] = formataddr((profile["full_name"], profile["email"]))
-        msg["To"] = opp["apply_email"]
-        msg["Subject"] = subject
-        msg.set_content(body)
         cv_path = profile.get("cv_path")
-        if cv_path and Path(cv_path).is_file():
-            data = Path(cv_path).read_bytes()
-            ext = Path(cv_path).suffix.lower()
-            maintype, subtype = ("application", "pdf") if ext == ".pdf" else ("application", "octet-stream")
-            msg.add_attachment(data, maintype=maintype, subtype=subtype, filename=profile.get("cv_filename") or "cv" + ext)
+        cv = Path(cv_path) if cv_path and Path(cv_path).is_file() else None
+        if mode == "brevo":
+            _send_brevo(brevo_settings(), opp, profile, subject, body, cv)
+        else:
+            _send_smtp(smtp_settings(), opp, profile, subject, body, cv)
+
+
+def _send_brevo(cfg: dict, opp: dict, profile: dict, subject: str, body: str, cv: Path | None) -> None:
+    """Sent from the platform's verified sender, in the student's name, with replies going to the student."""
+    payload = {
+        "sender": {"email": cfg["sender"], "name": profile["full_name"][:70]},
+        "to": [{"email": opp["apply_email"]}],
+        "replyTo": {"email": profile["email"], "name": profile["full_name"][:70]},
+        "subject": subject,
+        "textContent": body,
+    }
+    if cv:
+        payload["attachment"] = [{"name": profile.get("cv_filename") or "cv" + cv.suffix.lower(),
+                                  "content": base64.b64encode(cv.read_bytes()).decode()}]
+    try:
+        r = requests.post("https://api.brevo.com/v3/smtp/email", json=payload, timeout=30,
+                          headers={"api-key": cfg["api_key"], "accept": "application/json"})
+    except requests.RequestException as e:
+        raise ApplyError(f"The email service could not be reached ({type(e).__name__}). Nothing was recorded.") from e
+    if r.status_code >= 300:
         try:
-            if cfg["security"] == "ssl":
-                with smtplib.SMTP_SSL(cfg["host"], cfg["port"], context=ssl.create_default_context(), timeout=30) as s:
+            reason = r.json().get("message", "")
+        except ValueError:
+            reason = ""
+        raise ApplyError(f"The email service refused the message (HTTP {r.status_code}"
+                         f"{': ' + reason[:200] if reason else ''}). Nothing was recorded.")
+
+
+def _send_smtp(cfg: dict, opp: dict, profile: dict, subject: str, body: str, cv: Path | None) -> None:
+    msg = EmailMessage()
+    msg["From"] = formataddr((profile["full_name"], cfg["user"]))
+    msg["Reply-To"] = formataddr((profile["full_name"], profile["email"]))
+    msg["To"] = opp["apply_email"]
+    msg["Subject"] = subject
+    msg.set_content(body)
+    if cv:
+        ext = cv.suffix.lower()
+        subtype = "pdf" if ext == ".pdf" else "octet-stream"
+        msg.add_attachment(cv.read_bytes(), maintype="application", subtype=subtype,
+                           filename=profile.get("cv_filename") or "cv" + ext)
+    try:
+        if cfg["security"] == "ssl":
+            with smtplib.SMTP_SSL(cfg["host"], cfg["port"], context=ssl.create_default_context(), timeout=30) as s:
+                s.login(cfg["user"], cfg["password"])
+                s.send_message(msg)
+        else:
+            with smtplib.SMTP(cfg["host"], cfg["port"], timeout=30) as s:
+                if cfg["security"] == "starttls":
+                    s.starttls(context=ssl.create_default_context())
+                if cfg["security"] != "none":
                     s.login(cfg["user"], cfg["password"])
-                    s.send_message(msg)
-            else:
-                with smtplib.SMTP(cfg["host"], cfg["port"], timeout=30) as s:
-                    if cfg["security"] == "starttls":
-                        s.starttls(context=ssl.create_default_context())
-                    if cfg["security"] != "none":
-                        s.login(cfg["user"], cfg["password"])
-                    s.send_message(msg)
-        except (smtplib.SMTPException, OSError) as e:
-            raise ApplyError(f"The email could not be sent ({type(e).__name__}). Nothing was recorded.") from e
+                s.send_message(msg)
+    except (smtplib.SMTPException, OSError) as e:
+        raise ApplyError(f"The email could not be sent ({type(e).__name__}). Nothing was recorded.") from e
 
 
 # Site-specific adapters go here, e.g. {"SomeSite": SomeSiteFormAdapter()}.

@@ -9,5 +9,5 @@ sys.path.insert(0, str(SRC))
 _tmp = tempfile.mkdtemp(prefix="internship-tests-")
 os.environ["INTERNSHIP_DATA_DIR"] = _tmp
 os.environ["INTERNSHIP_DB"] = os.path.join(_tmp, "test.db")
-for k in ("SMTP_USER", "SMTP_PASSWORD", "APPLY_DRY_RUN"):
+for k in ("SMTP_USER", "SMTP_PASSWORD", "APPLY_DRY_RUN", "BREVO_API_KEY", "MAIL_FROM"):
     os.environ.pop(k, None)

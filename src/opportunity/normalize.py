@@ -57,10 +57,32 @@ def make_id(url: str) -> str:
     return hashlib.sha1(canonical_url(url).encode()).hexdigest()[:12]
 
 
+_TLDS = {"com", "org", "net", "ke", "co", "ac", "go", "or", "ne", "info", "edu", "gov", "int", "io", "africa",
+         "uk", "us", "ug", "tz", "rw", "et", "za", "ng", "gh", "biz", "me", "dev", "app", "tech", "ngo"}
+
+
+def clean_email(addr: str) -> str:
+    """Repair addresses glued to the next word in page text: 'jobs@rvibs.ac.keSubject' -> 'jobs@rvibs.ac.ke',
+    'hr@acme.comdeadline' -> 'hr@acme.com'. Returns '' if it still doesn't look like an address."""
+    addr = (addr or "").strip().rstrip(".")
+    local, _, domain = addr.partition("@")
+    labels = domain.split(".")
+    if not local or len(labels) < 2:
+        return ""
+    last = re.split(r"(?<=[a-z])(?=[A-Z])", labels[-1])[0].lower()   # cut at a camelCase join
+    if last not in _TLDS:
+        last = next((t for t in sorted(_TLDS, key=len, reverse=True) if last.startswith(t)), last)
+    labels[-1] = last
+    out = f"{local}@{'.'.join(labels).lower()}"
+    return out if _EMAIL.fullmatch(out) else ""
+
+
 def extract_email(text: str) -> str:
     for m in _EMAIL.finditer(text or ""):
         if not _EMAIL_BLOCK.search(m.group(0)):
-            return m.group(0).rstrip(".")
+            addr = clean_email(m.group(0))
+            if addr:
+                return addr
     return ""
 
 
@@ -136,7 +158,7 @@ def normalize(raw: dict, today: date | None = None) -> Opportunity:
     posted = parse_date(str(raw.get("posted") or ""), today, future=False)
 
     # --- apply info ---
-    apply_email = (raw.get("apply_email") or "").strip() or extract_email(description)
+    apply_email = clean_email(raw.get("apply_email") or "") or extract_email(description)
     apply_url = (raw.get("apply_url") or "").strip()
     url = (raw.get("link") or raw.get("url") or "").strip()
 

@@ -144,3 +144,12 @@ def test_old_ads_without_deadline_are_treated_as_expired():
     assert normalize(raw(posted="2025-01-10"), TODAY).expired
     assert not normalize(raw(posted="2026-09-20"), TODAY).expired
     assert not normalize(raw(posted="2025-01-10", deadline="2026-12-01"), TODAY).expired
+
+
+def test_emails_glued_to_the_next_word_are_repaired():
+    from opportunity.normalize import clean_email
+    assert extract_email("Send your application to: jobs@rvibs.ac.keSubject line: Intern") == "jobs@rvibs.ac.ke"
+    assert clean_email("hr@acme.comdeadline") == "hr@acme.com"
+    assert clean_email("Careers@GreenCom.co.ke.") == "Careers@greencom.co.ke"
+    assert clean_email("intern@company.africa") == "intern@company.africa"
+    assert clean_email("not-an-email") == ""

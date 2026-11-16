@@ -196,3 +196,37 @@ def test_search_results_respect_site_specific_apply_rules(client, monkeypatch):
     monkeypatch.setitem(adapters.SOURCE_ADAPTERS, "Stub", adapters.LinkApplicationAdapter())   # e.g. a login-only site
     hits = client.get("/opportunities/search", params={"course": "Software Engineering"}).json()["results"]
     assert next(h for h in hits if h["organization"] == "Acme")["can_auto_apply"] is False
+
+
+class _Resp:
+    def __init__(self, status, data):
+        self.status_code, self._data = status, data
+
+    def json(self):
+        return self._data
+
+
+def test_brevo_https_transport_used_when_configured(monkeypatch, tmp_path):
+    """Render's free plan blocks SMTP ports, so email can go out through Brevo's HTTPS API instead."""
+    calls = []
+    monkeypatch.setenv("BREVO_API_KEY", "test-key")
+    monkeypatch.setenv("MAIL_FROM", "apply@platform.test")
+    monkeypatch.setenv("SMTP_USER", "ignored@example.com")      # Brevo wins over SMTP when both are set
+    monkeypatch.setenv("SMTP_PASSWORD", "x")
+    monkeypatch.setattr(adapters.requests, "post", lambda url, **kw: calls.append((url, kw)) or _Resp(201, {"messageId": "1"}))
+    assert adapters.sending_mode() == "brevo"
+    cv = tmp_path / "cv.pdf"
+    cv.write_bytes(b"%PDF-1.4")
+    opp = {"title": "Dev Intern", "organization": "Acme", "apply_email": "hr@acme.co.ke", "expired": False}
+    profile = {**PROFILE, "cv_filename": "My CV.pdf", "cv_path": str(cv)}
+    adapters.EmailApplicationAdapter().submit(opp, profile)
+    url, kw = calls[0]
+    p = kw["json"]
+    assert url == "https://api.brevo.com/v3/smtp/email" and kw["headers"]["api-key"] == "test-key"
+    assert p["sender"] == {"email": "apply@platform.test", "name": "Wanjiku Test"}
+    assert p["to"] == [{"email": "hr@acme.co.ke"}] and p["replyTo"]["email"] == "wanjiku@example.com"
+    assert p["attachment"][0]["name"] == "My CV.pdf" and "Software Engineering" in p["textContent"]
+
+    monkeypatch.setattr(adapters.requests, "post", lambda url, **kw: _Resp(401, {"message": "Key not found"}))
+    with pytest.raises(adapters.ApplyError, match="401: Key not found"):
+        adapters.EmailApplicationAdapter().submit(opp, profile)

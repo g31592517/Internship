@@ -73,8 +73,9 @@ export default function ApplyPanel({ opp, profile, application, goProfile, onApp
     }
   }
 
+  // Send it from the student's own mailbox instead (their email app opens with everything pre-filled).
   const mailto = opp.apply_email
-    ? `mailto:${opp.apply_email}?subject=${encodeURIComponent(draft?.subject || `Application for ${opp.title}`)}&body=${encodeURIComponent(draft?.body || '')}`
+    ? `mailto:${opp.apply_email}?subject=${encodeURIComponent(subject || draft?.subject || `Application for ${opp.title}`)}&body=${encodeURIComponent(body || draft?.body || '')}`
     : null
 
   return (
@@ -116,6 +117,14 @@ export default function ApplyPanel({ opp, profile, application, goProfile, onApp
             </button>
             <button className="btn btn-secondary" onClick={() => setStage('idle')} disabled={stage === 'sending'}>Cancel</button>
           </div>
+          {mailto && (
+            <p className="text-sm text-slate-600">
+              Prefer to send it from your own email account?{' '}
+              <a className="font-medium text-indigo-700 underline" href={mailto}
+                onClick={() => { setOpened(true); setStage('idle') }}>Open it in my email app</a>
+              {' '}— attach your CV there, send it, then come back and choose “Yes, I applied — track it”.
+            </p>
+          )}
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">

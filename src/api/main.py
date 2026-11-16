@@ -35,7 +35,7 @@ if str(SRC) not in sys.path:      # lets `python -m` / tests import scrapers & o
     sys.path.insert(0, str(SRC))
 
 from api.db import DATA_DIR, Store                      # noqa: E402
-from applications.adapters import ApplyError, adapter_for, dry_run, smtp_settings   # noqa: E402
+from applications.adapters import ApplyError, adapter_for, dry_run, sending_mode   # noqa: E402
 from opportunity.service import SearchService                      # noqa: E402
 from scrapers.registry import active_sources, source_info          # noqa: E402
 
@@ -159,7 +159,8 @@ Token = Header(default=None, alias="X-Profile-Token")
 # ------------------------------------------------------------------ routes
 @app.get("/health")
 def health():
-    return {"ok": True, "email_sending": "dry-run" if dry_run() else ("configured" if smtp_settings() else "not configured")}
+    mode = sending_mode()
+    return {"ok": True, "email_sending": mode if mode in ("dry-run", "off") else f"configured ({mode})"}
 
 
 @app.get("/sources")

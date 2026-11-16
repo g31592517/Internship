@@ -38,7 +38,8 @@ results are cached for 15 minutes per course, and changing the location or filte
 "Apply Automatically" is offered only when the ad names an application email address. To let the server send,
 set environment variables before starting it (the password is never stored in the database or sent to the browser):
 ```
-SMTP_USER=you@gmail.com   SMTP_PASSWORD=<gmail app password>
+BREVO_API_KEY=<key>  MAIL_FROM=<verified sender>   # HTTPS email API - required on Render's free plan (SMTP blocked)
+SMTP_USER=you@gmail.com   SMTP_PASSWORD=<gmail app password>   # or plain SMTP where the host allows it
 # optional: SMTP_HOST (smtp.gmail.com)  SMTP_PORT (465)  SMTP_SECURITY (ssl|starttls|none)
 # or, as before, GMAIL_USER / GMAIL_PASS in src/config.py
 APPLY_DRY_RUN=1                   # try the whole flow without sending anything
