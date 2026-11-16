@@ -172,3 +172,5 @@ data/
 frontend/node_modules/
 frontend/dist/
 .pytest_cache/
+# the Python "lib/" rule above must not hide the React helpers
+!frontend/src/lib/
