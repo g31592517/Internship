@@ -2,6 +2,11 @@ import requests
 from datetime import datetime
 
 class MicrosoftScraper:
+    # Legacy adapter kept from the original project; not used by the web app until fixed.
+    name = "Microsoft Careers"
+    enabled = False
+    disabled_reason = "The old careers API host fails TLS verification / returns 404; needs the current careers API."
+
     def __init__(self):
         self.api_url = "https://gcsservices.careers.microsoft.com/search/api/v1/search"
         self.headers = {

@@ -4,6 +4,11 @@ from datetime import datetime
 import time
 
 class FuzuScraper:
+    # Legacy adapter kept from the original project; not used by the web app until fixed.
+    name = "Fuzu"
+    enabled = False
+    disabled_reason = "Search URL now returns 404 and the site sits behind bot protection; needs a new adapter."
+
     def __init__(self):
         self.base_url = "https://www.fuzu.com"
         # Fuzu has strict bot protection (Cloudflare). 

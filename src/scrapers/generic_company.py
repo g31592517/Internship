@@ -1,6 +1,11 @@
 from scrapers.myjobmag import MyJobMagScraper
 
 class GenericCompanyScraper:
+    # Legacy adapter kept from the original project; not used by the web app until fixed.
+    name = "Company search via MyJobMag"
+    enabled = False
+    disabled_reason = "Superseded by the Organization filter on search results."
+
     """
     A scraper that uses existing aggregators (MyJobMag, Corporate Staffing)
     to find jobs for specific companies that are hard to scrape directly.

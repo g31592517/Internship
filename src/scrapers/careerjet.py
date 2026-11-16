@@ -1,85 +1,39 @@
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
-from datetime import datetime
+import re
 
-class CareerJetScraper:
-    def __init__(self):
-        self.base_url = "https://www.careerjet.co.ke"
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
+from scrapers.base import BaseScraper, now_str, soup_of
 
-    def scrape(self, query="internship", location="Kenya"):
-        url = f"{self.base_url}/jobs?s={query}&l={location}"
-        print(f"Scraping CareerJet: {url}")
-        
-        try:
-            response = requests.get(url, headers=self.headers)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            jobs = []
-            # CareerJet often uses article tags for job cards. 
-            # If not, we can look for specific classes.
-            # Based on inspection, we look for job containers.
-            
-            # Strategy: Find all 'a' tags with href containing '/jobad/' which are title links
-            job_links = soup.find_all('a', href=lambda href: href and '/jobad/' in href)
-            
-            seen_urls = set()
 
-            for link in job_links:
-                job_url = self.base_url + link['href']
-                if job_url in seen_urls:
-                    continue
-                seen_urls.add(job_url)
+class CareerJetScraper(BaseScraper):
+    """CareerJet Kenya. From many networks it answers with a Cloudflare Turnstile challenge instead
+    of results. We do NOT try to pass it: BaseScraper.get raises SourceBlocked and the search just
+    reports CareerJet as blocked. If a network is let through, the parser below works as before."""
+    name = "CareerJet"
+    base_url = "https://www.careerjet.co.ke"
 
-                title = link.get_text(strip=True)
-                
-                # Find the container to extract company and location
-                # Usually the link is inside a container. We go up parents to find relevant info.
-                # Simplistic approach: just get title and url for now, maybe location if close by.
-                
-                # Try to find parent article or div.job
-                container = link.find_parent('article')
-                if not container:
-                    container = link.find_parent('div', class_='job') # fallback
-                
-                company = "Unknown"
-                location_text = "Unknown"
-                posted_date = "Unknown"
-
-                if container:
-                    # Attempt to find company
-                    company_tag = container.find('p', class_='company')
-                    if company_tag:
-                        company = company_tag.get_text(strip=True)
-                    
-                    # Attempt to find location
-                    location_tag = container.find('ul', class_='location') # sometimes ul
-                    if not location_tag:
-                         location_tag = container.find('div', class_='locations')
-                    
-                    if location_tag:
-                        location_text = location_tag.get_text(strip=True)
-                        
-                    # Attempt to find date
-                    date_tag = container.find('div', class_='locations_compact') # often date is here or distinct
-                    if not date_tag:
-                         date_tag = container.find('span', class_='badge-time') # sometimes
-
-                jobs.append({
-                    'title': title,
-                    'company': company,
-                    'location': location_text,
-                    'link': job_url,
-                    'source': 'CareerJet',
-                    'scraped_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                })
-                
-            return jobs
-
-        except Exception as e:
-            print(f"Error scraping CareerJet: {e}")
-            return []
+    def scrape(self, query="internship", location=None):
+        print(f"Scraping CareerJet: {query}")
+        soup = soup_of(self.get(f"{self.base_url}/jobs", params={"s": query, "l": "Kenya"}))
+        jobs, seen = [], set()
+        for link in soup.find_all("a", href=lambda h: h and "/jobad/" in h):
+            job_url = link["href"] if link["href"].startswith("http") else self.base_url + link["href"]
+            if job_url in seen:
+                continue
+            seen.add(job_url)
+            container = link.find_parent("article") or link.find_parent("div", class_="job")
+            company, loc = "", ""
+            if container:
+                c = container.find("p", class_="company")
+                company = c.get_text(strip=True) if c else ""
+                l = container.find("ul", class_="location") or container.find("div", class_="locations")
+                loc = l.get_text(" ", strip=True) if l else ""
+                desc = container.find("div", class_="desc")
+            jobs.append({
+                "title": link.get_text(strip=True),
+                "company": company,
+                "location": loc,
+                "link": job_url,
+                "source": self.name,
+                "scraped_at": now_str(),
+                "snippet": desc.get_text(" ", strip=True) if container and desc else "",
+            })
+        return jobs

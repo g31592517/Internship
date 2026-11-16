@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 
 class KCBScraper:
+    # Legacy adapter kept from the original project; not used by the web app until fixed.
+    name = "KCB Group"
+    enabled = False
+    disabled_reason = "Careers page lists no postings (jobs live on an external system); the old link-keyword scan only returned site navigation."
+
     def __init__(self):
         self.base_url = "https://ke.kcbgroup.com/about-us/careers"
         self.headers = {

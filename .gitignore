@@ -166,3 +166,9 @@ applied_jobs.txt
 # Environment files
 .env
 .env.local
+
+# Web app
+data/
+frontend/node_modules/
+frontend/dist/
+.pytest_cache/

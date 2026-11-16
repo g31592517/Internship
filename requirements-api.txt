@@ -1,0 +1,9 @@
+# Web app (FastAPI backend + scrapers) - this is all the server needs.
+# Tests / legacy CLI extras: requirements-dev.txt. The original requirements.txt is a full environment freeze.
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+requests>=2.31
+beautifulsoup4>=4.12
+lxml>=5.0
+python-multipart>=0.0.9

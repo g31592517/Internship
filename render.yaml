@@ -1,0 +1,27 @@
+# Render Blueprint: Dashboard -> New -> Blueprint -> pick this repository.
+# See DEPLOY_RENDER.md for the step-by-step guide and the free-plan variant.
+services:
+  - type: web
+    name: internship-finder
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # A persistent disk needs a paid instance. "starter" = 0.5 CPU / 512 MB.
+    # For a free trial run: set plan to free AND delete the whole `disk:` block (data is then lost on restarts).
+    plan: starter
+    region: frankfurt          # closest Render region to Kenya
+    healthCheckPath: /health
+    disk:
+      name: internship-data
+      mountPath: /var/data     # SQLite database + uploaded CVs
+      sizeGB: 1
+    envVars:
+      - key: INTERNSHIP_DATA_DIR
+        value: /var/data
+      - key: MAX_CONCURRENT_SCRAPES
+        value: "2"
+      # Optional: lets "Apply Automatically" send email. Render asks for these when the Blueprint is created;
+      # leave them empty to launch without email sending (students get a pre-filled mailto: link instead).
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
